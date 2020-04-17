@@ -1,0 +1,42 @@
+---
+title: "Final Project"
+subtitle: CS 750/850 Machine Learning
+---
+
+```{r, echo=FALSE}
+library("dplyr")
+library("MASS")
+```
+```{r, echo=FALSE}
+data <- read.csv('asteroids.csv')
+```
+```{r, echo=FALSE}
+set.seed(1)
+dataf = data[ , -which(names(data) %in% c("n_del_obs_used","n_dop_obs_used", "full_name"))]
+pha.y = dataf %>% filter(pha == "Y")
+pha.n = dataf %>% filter(pha == "N")
+
+pha.n = na.omit(pha.n)
+pha.n = sample_frac(pha.n, 0.01)
+pha.y = na.omit(pha.y)
+
+pha = rbind(pha.y, pha.n)
+pha$pha = as.numeric(pha$pha)-2
+write.csv(pha, "./pha.csv")
+```
+
+
+```{r}
+pha.test = sample_frac(pha, 0.25)
+pha.train = anti_join(pha, pha.test)
+```
+
+```{r}
+fit = glm(pha ~ ., data=pha.train, family="binomial")
+pred = predict(lda.fit, newdata=pha.test, type="response")
+mean(round(pred)==pha.test$pha)
+table(round(pred), pha.test$pha, dnn=c('LogisticPredicted', 'True'))
+
+
+
+```
