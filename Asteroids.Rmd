@@ -1,16 +1,24 @@
 ---
 title: "Final Project"
 subtitle: CS 750/850 Machine Learning
+authors: Jeff + Matt + All the Muppets
 ---
 
 ```{r, echo=FALSE}
 library("dplyr")
 library("MASS")
+library(e1071)
+library(corrplot)
 ```
-```{r, echo=FALSE}
+
+
+#Data scrubbing, conforming and organization
+##Used data migrated to 
+```{r}
 data <- read.csv('asteroids.csv')
 ```
-```{r, echo=FALSE}
+
+```{r}
 set.seed(1)
 dataf = data[ , -which(names(data) %in% c("n_del_obs_used","n_dop_obs_used", "full_name"))]
 pha.y = dataf %>% filter(pha == "Y")
@@ -22,21 +30,72 @@ pha.y = na.omit(pha.y)
 
 pha = rbind(pha.y, pha.n)
 pha$pha = as.numeric(pha$pha)-2
+pha$condition_code = as.numeric(pha$condition_code)
 write.csv(pha, "./pha.csv")
 ```
 
 
+#Training and Test Set Generation
 ```{r}
 pha.test = sample_frac(pha, 0.25)
 pha.train = anti_join(pha, pha.test)
+
+pha.test = pha.test[, 1:13]
+pha.train = pha.train[, 1:13]
+
+correlation = cor(pha.train)
+corrplot(correlation)
+
 ```
 
+
+#Logistic Regression
 ```{r}
 fit = glm(pha ~ ., data=pha.train, family="binomial")
-pred = predict(lda.fit, newdata=pha.test, type="response")
+pred = predict(fit, newdata=pha.test, type="response")
 mean(round(pred)==pha.test$pha)
 table(round(pred), pha.test$pha, dnn=c('LogisticPredicted', 'True'))
+```
 
 
 
+
+#Support Vector Machines
+```{r}
+sv_classifier = svm(pha ~ ., data = pha.train, kernel = "linear", cost = 10, scale = FALSE)
+plot(sv_classifier, pha.train)
+
+
+
+```
+
+
+
+
+#Quadratic Discriminant Analysis
+```{r}
+# head(simple_pha.test)
+# summary(pha)
+# summary(simple_pha.train)
+
+fit = qda(pha ~ ., data=pha.train)
+pred = predict(fit, newdata=pha.test, type="response")$class
+mean(pred==pha.test$pha)
+table(pred, pha.test$pha, dnn=c('QDAPredicted', 'True'))
+```
+
+
+
+
+
+#Linear Discriminant Analysis
+```{r}
+# head(simple_pha.test)
+# summary(pha)
+# summary(simple_pha.train)
+
+fit = lda(pha ~ ., data=pha.train)
+pred = predict(fit, newdata=pha.test, type="response")$class
+mean(pred==pha.test$pha)
+table(pred, pha.test$pha, dnn=c('LDAPredicted', 'True'))
 ```
