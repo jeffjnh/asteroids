@@ -1,19 +1,30 @@
 ---
 title: "Final Project"
+output: pdf_document
 subtitle: CS 750/850 Machine Learning
 authors: Jeff + Matt + All the Muppets
 ---
 
 ```{r, echo=FALSE}
-library("dplyr")
-library("MASS")
+library(dplyr)
+library(MASS)
 library(e1071)
+library(ggplot2)
 library(corrplot)
 ```
 
+# Asteroidz
+The problem we are investigating is the best method of machine learning to predict if an asteroid is potentially hazardous based on the standard observations recorded when documenting asteroids. An asteroid can be either potentially hazardous or not potentially hazardous so we will investigate popular classification methods. The data is sourced from the NASA Jet Propulsion Lab’s small body database. We are using ~10,000 records for our dataset with ~2,400 classified as potentially hazardous. This is not the total dataset that NASA provides, but is a subset that we determined would be large enough to yield accurate results while still running in an acceptable amount of time.
 
-#Data scrubbing, conforming and organization
-##Used data migrated to 
+
+## Evaluation
+The metric we will be judging different methods by comparing the true positive rate of each method. The reasoning for this is where we allow the error, we would rather overfit asteroids to classify a non-hazardous asteroid as hazardous rather than misclassify a potentially hazardous asteroid.
+
+
+
+
+# Data scrubbing, conforming and organization
+## Used data migrated to 
 ```{r}
 data <- read.csv('asteroids.csv')
 ```
@@ -35,7 +46,7 @@ write.csv(pha, "./pha.csv")
 ```
 
 
-#Training and Test Set Generation
+# Training and Test Set Generation
 ```{r}
 pha.test = sample_frac(pha, 0.25)
 pha.train = anti_join(pha, pha.test)
@@ -49,7 +60,7 @@ corrplot(correlation)
 ```
 
 
-#Logistic Regression
+# Logistic Regression
 ```{r}
 fit = glm(pha ~ ., data=pha.train, family="binomial")
 pred = predict(fit, newdata=pha.test, type="response")
@@ -60,35 +71,38 @@ table(round(pred), pha.test$pha, dnn=c('LogisticPredicted', 'True'))
 
 
 
-#Support Vector Machines
+# Support Vector Machines
 ```{r}
-sv_classifier = svm(pha ~ ., data = pha.train, kernel = "linear", cost = 10, scale = FALSE)
+sv_classifier = svm(pha ~ ., data = pha.train, kernel = "linear", cost = 10, scale = TRUE)
 plot(sv_classifier, pha.train)
 
 
 
 ```
 
+```{r}
+plot(sv_classifier, pha.train, fill = TRUE)
+```
 
 
 
-#Quadratic Discriminant Analysis
+# Quadratic Discriminant Analysis
 ```{r}
 # head(simple_pha.test)
 # summary(pha)
 # summary(simple_pha.train)
 
-fit = qda(pha ~ ., data=pha.train)
-pred = predict(fit, newdata=pha.test, type="response")$class
-mean(pred==pha.test$pha)
-table(pred, pha.test$pha, dnn=c('QDAPredicted', 'True'))
+# fit = qda(pha ~ ., data=pha.train)
+# pred = predict(fit, newdata=pha.test, type="response")$class
+# mean(pred==pha.test$pha)
+# table(pred, pha.test$pha, dnn=c('QDAPredicted', 'True'))
 ```
 
 
 
 
 
-#Linear Discriminant Analysis
+# Linear Discriminant Analysis
 ```{r}
 # head(simple_pha.test)
 # summary(pha)
